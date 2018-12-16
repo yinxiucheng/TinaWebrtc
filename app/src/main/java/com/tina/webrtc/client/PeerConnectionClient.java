@@ -1,11 +1,26 @@
 package com.tina.webrtc.client;
 
 import android.content.Context;
+import android.util.Log;
 
+import com.tina.webrtc.interfaces.SignalingParameters;
+
+import org.webrtc.AudioSource;
+import org.webrtc.AudioTrack;
+import org.webrtc.DataChannel;
+import org.webrtc.EglBase;
 import org.webrtc.IceCandidate;
+import org.webrtc.MediaConstraints;
+import org.webrtc.MediaStream;
+import org.webrtc.PeerConnection;
 import org.webrtc.PeerConnectionFactory;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
+import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoCapturer;
+import org.webrtc.VideoRenderer;
+import org.webrtc.VideoSource;
+import org.webrtc.VideoTrack;
 import org.webrtc.voiceengine.WebRtcAudioUtils;
 
 import java.util.concurrent.Executors;
@@ -22,6 +37,23 @@ public class PeerConnectionClient {
 
     private static final PeerConnectionClient instance = new PeerConnectionClient();
     PeerConnectionFactory.Options options = null;
+
+    private final PCObserver pcObserver = new PCObserver();
+    private MediaConstraints pcConstraints;
+
+    private int videoWidth;
+    private int videoHeight;
+    private int videoFps;
+    private MediaConstraints audioConstraints;
+    private MediaConstraints sdpMediaConstraints;
+    private MediaStream mediaStream;
+    //本地的视频源
+    private VideoTrack localVideoTrack;
+    //远程的视频源
+    private VideoTrack remoteVideoTrack;
+
+    private PeerConnection peerConnection;
+
     public static PeerConnectionClient getInstance() {
         return instance;
     }
@@ -54,6 +86,131 @@ public class PeerConnectionClient {
         });
 
     }
+
+
+
+    //创建 空连接  native   scoket（“ip”）
+    public void createPeerConnection(final EglBase.Context renderEGLContext,
+                                     final SurfaceViewRenderer localview, final SurfaceViewRenderer remoteView,
+                                     final VideoCapturer videoCapturer,
+                                     final SignalingParameters signalingParameters) {
+
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Log.i("david", "run: ----------------------------------->2");
+                pcConstraints = new MediaConstraints();
+                pcConstraints.optional.add(
+                        new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
+
+                //1280  *720
+                videoWidth = 1280;
+                videoHeight = 720;
+                videoFps = 30;
+                //Create audio constraints.
+                audioConstraints = new MediaConstraints();
+                sdpMediaConstraints = new MediaConstraints();
+                sdpMediaConstraints.mandatory.add(
+                        new MediaConstraints.KeyValuePair("OfferToReceiveAudio", "true"));
+                sdpMediaConstraints.mandatory.add(
+                        new MediaConstraints.KeyValuePair("OfferToReceiveVideo", "true"));
+                Log.i("david", " 2  PeerConnectionFactory 初始化是否完成   "+factory);
+                factory.setVideoHwAccelerationOptions(renderEGLContext, renderEGLContext);
+                PeerConnection.RTCConfiguration rtcConfig =
+                        new PeerConnection.RTCConfiguration(signalingParameters.iceServers);
+                // TCP candidates are only useful when connecting to a server that supports
+                // ICE-TCP.
+                rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
+                rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
+                rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
+                rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+                // Use ECDSA encryption.
+                rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
+                //不是阻塞   peerConnection--->
+                peerConnection = factory.createPeerConnection(rtcConfig, pcConstraints, pcObserver);
+
+                //声音    推送B
+                //创建一个音频音源
+                AudioSource audioSource = factory.createAudioSource(audioConstraints);
+                AudioTrack audioTrack = factory.createAudioTrack("ARDAMSa0", audioSource);
+                audioTrack.setEnabled(true);
+
+                mediaStream = factory.createLocalMediaStream("ARDAMS");
+                mediaStream.addTrack(audioTrack);
+                //音源有了  推送B
+
+                //创建一个视频源
+                VideoSource videoSource = factory.createVideoSource(videoCapturer);
+                //预览的格式
+                videoCapturer.startCapture(videoWidth, videoHeight, videoFps);
+
+                localVideoTrack = factory.createVideoTrack("ARDAMSv0", videoSource);
+                localVideoTrack.setEnabled(true);
+                localVideoTrack.addRenderer(new VideoRenderer(localview));
+                //远端就能够看到 摄像头的画面
+                mediaStream.addTrack(localVideoTrack);
+                peerConnection.addStream(mediaStream);
+                //视频B端
+            }
+        });
+    }
+
+
+
+    private class PCObserver implements PeerConnection.Observer{
+
+        @Override
+        public void onSignalingChange(PeerConnection.SignalingState signalingState) {
+
+        }
+
+        @Override
+        public void onIceConnectionChange(PeerConnection.IceConnectionState iceConnectionState) {
+
+        }
+
+        @Override
+        public void onIceConnectionReceivingChange(boolean b) {
+
+        }
+
+        @Override
+        public void onIceGatheringChange(PeerConnection.IceGatheringState iceGatheringState) {
+
+        }
+
+        @Override
+        public void onIceCandidate(IceCandidate iceCandidate) {
+
+        }
+
+        @Override
+        public void onIceCandidatesRemoved(IceCandidate[] iceCandidates) {
+
+        }
+
+        @Override
+        public void onAddStream(MediaStream mediaStream) {
+
+        }
+
+        @Override
+        public void onRemoveStream(MediaStream mediaStream) {
+
+        }
+
+        @Override
+        public void onDataChannel(DataChannel dataChannel) {
+
+        }
+
+        @Override
+        public void onRenegotiationNeeded() {
+
+        }
+    }
+
 
     public static class DataChannelParameters {
 

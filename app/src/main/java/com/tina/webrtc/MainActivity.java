@@ -10,6 +10,7 @@ import com.tina.webrtc.client.WebSocketRTCClient;
 import com.tina.webrtc.interfaces.RoomConnectionParameters;
 import com.tina.webrtc.interfaces.SignalingEvents;
 import com.tina.webrtc.interfaces.SignalingParameters;
+import com.tina.webrtc.utils.Utils;
 import com.tina.webrtc.view.PercentFrameLayout;
 
 import org.webrtc.EglBase;
@@ -18,6 +19,7 @@ import org.webrtc.RendererCommon;
 import org.webrtc.SessionDescription;
 import org.webrtc.StatsReport;
 import org.webrtc.SurfaceViewRenderer;
+import org.webrtc.VideoCapturer;
 
 public class MainActivity extends AppCompatActivity implements PeerConnectionClient.PeerConnectionEvents, SignalingEvents {
 
@@ -31,6 +33,7 @@ public class MainActivity extends AppCompatActivity implements PeerConnectionCli
     private PeerConnectionClient.PeerConnectionParameters peerConnectionParameters;
 
     private RoomConnectionParameters roomConnectionParamters;
+    private SignalingParameters signalingParameters;
 
 
     @Override
@@ -139,6 +142,12 @@ public class MainActivity extends AppCompatActivity implements PeerConnectionCli
 
     @Override
     public void onConnectedToRoom(SignalingParameters params) {
+//        peerconnectionClitent
+        signalingParameters = params;
+        //VideoCapturer  对
+        VideoCapturer videoCapturer = Utils.createVideoCaptuer(this);
+        peerConnectionClient.createPeerConnection(rootEglBase.getEglBaseContext(), localView
+                , remoteView, videoCapturer, signalingParameters);
 
     }
 

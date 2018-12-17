@@ -24,9 +24,9 @@ public class Utils {
         return connectionParameters.roomUrl + "/message/" + connectionParameters.roomId + "/"
                 + signalingParameters.clientId;
     }
-///VideoCapturer  Camaera
+
+     //VideoCapturer  Camaera
     public static VideoCapturer createVideoCaptuer(Context context) {
-//
         VideoCapturer videoCapturer;
         if (Camera2Enumerator.isSupported(context)) {
             //Camera2

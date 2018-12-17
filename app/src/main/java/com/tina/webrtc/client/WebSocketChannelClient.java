@@ -82,13 +82,13 @@ public class WebSocketChannelClient {
     }
 
     public void connect(String wsUrl, final String postUrl) {
-        wsUrl = "ws://39.107.122.235:8089/ws";
+        wsUrl = "ws://47.107.132.117:8089/ws";
         postServerUrl = postUrl;
         closeEvent = false;
         ws = new WebSocketConnection();
         wsObserver = new WebSocketObserver();
         try {
-            ws.connect(new URI("ws://39.107.122.235:8089/ws"), wsObserver);
+            ws.connect(new URI("ws://47.107.132.117:8089/ws"), wsObserver);
         } catch (Exception e) {
         }
     }

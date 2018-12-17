@@ -2,6 +2,7 @@ package com.tina.webrtc;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 
@@ -22,6 +23,7 @@ import org.webrtc.SurfaceViewRenderer;
 import org.webrtc.VideoCapturer;
 
 public class MainActivity extends AppCompatActivity implements PeerConnectionClient.PeerConnectionEvents, SignalingEvents {
+    public static final String TAG = "MainActivity";
 
     private SurfaceViewRenderer remoteView, localView;
 
@@ -42,7 +44,6 @@ public class MainActivity extends AppCompatActivity implements PeerConnectionCli
         setContentView(R.layout.activity_main);
         initView();
         initWebrtc();
-
         //链接房间服务器
         connectRoom();
 
@@ -50,7 +51,7 @@ public class MainActivity extends AppCompatActivity implements PeerConnectionCli
 
     private void connectRoom() {
         //openfire 聊天
-        roomConnectionParamters = new RoomConnectionParameters("https://39.107.122.235", "88889", false);
+        roomConnectionParamters = new RoomConnectionParameters("https://47.107.132.117", "12356586", false);
         WebSocketRTCClient webSocketRTCClient = new WebSocketRTCClient(this);
 
         webSocketRTCClient.connectToRoom(roomConnectionParamters);
@@ -142,7 +143,8 @@ public class MainActivity extends AppCompatActivity implements PeerConnectionCli
 
     @Override
     public void onConnectedToRoom(SignalingParameters params) {
-//        peerconnectionClitent
+        Log.e(TAG, "onConnectedToRoom sucess!");
+        //peerconnectionClitent
         signalingParameters = params;
         //VideoCapturer  对
         VideoCapturer videoCapturer = Utils.createVideoCaptuer(this);

@@ -94,12 +94,10 @@ public class PeerConnectionClient {
                                      final SurfaceViewRenderer localview, final SurfaceViewRenderer remoteView,
                                      final VideoCapturer videoCapturer,
                                      final SignalingParameters signalingParameters) {
-
-
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                Log.i("david", "run: ----------------------------------->2");
+                Log.i("david", "run: --------------------->2");
                 pcConstraints = new MediaConstraints();
                 pcConstraints.optional.add(
                         new MediaConstraints.KeyValuePair("DtlsSrtpKeyAgreement", "true"));
@@ -127,7 +125,8 @@ public class PeerConnectionClient {
                 rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
                 // Use ECDSA encryption.
                 rtcConfig.keyType = PeerConnection.KeyType.ECDSA;
-                //不是阻塞   peerConnection--->
+
+                //创建连接，不是阻塞peerConnection--->
                 peerConnection = factory.createPeerConnection(rtcConfig, pcConstraints, pcObserver);
 
                 //声音    推送B
@@ -150,6 +149,7 @@ public class PeerConnectionClient {
                 localVideoTrack.addRenderer(new VideoRenderer(localview));
                 //远端就能够看到 摄像头的画面
                 mediaStream.addTrack(localVideoTrack);
+                //把流放入Connection中
                 peerConnection.addStream(mediaStream);
                 //视频B端
             }
@@ -312,7 +312,7 @@ public class PeerConnectionClient {
     }
 
 
-    //  --------------------------接口-------------- 连接回调接口---------------------------------
+    //------接口------ 连接回调接口----------
     public interface PeerConnectionEvents {
         /**
          * Callback fired once local SDP is created and set.

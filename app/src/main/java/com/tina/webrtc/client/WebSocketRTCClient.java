@@ -2,10 +2,13 @@ package com.tina.webrtc.client;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Log;
 
+import com.tina.webrtc.MainActivity;
 import com.tina.webrtc.interfaces.RoomConnectionParameters;
 import com.tina.webrtc.interfaces.SignalingEvents;
 import com.tina.webrtc.interfaces.SignalingParameters;
+import com.tina.webrtc.utils.Utils;
 
 /**
  * @author yxc
@@ -18,56 +21,57 @@ public class WebSocketRTCClient implements WebSocketChannelClient.WebSocketChann
     private static final String ROOM_MESSAGE = "message";
     private static final String ROOM_LEAVE = "leave";
 
-
-
     private enum ConnectionState {NEW, CONNECTED, CLOSED, ERROR}
 
     private enum MessageType {MESSAGE, LEAVE}
 
     private Handler handler;
     private boolean initiator;
-    private SignalingEvents events;
+    private SignalingEvents mainActivityInterface;
     private ConnectionState roomState;
     private RoomConnectionParameters connectionParameters;
     private String messageUrl;
     private String leaveUrl;
 
 
-    public WebSocketRTCClient(SignalingEvents events){
-        this.events = events;
+    public WebSocketRTCClient(SignalingEvents mainActivityInterface) {
+        this.mainActivityInterface = mainActivityInterface;
         roomState = ConnectionState.NEW;
         final HandlerThread handlerThread = new HandlerThread(TAG);
         handlerThread.start();
         handler = new Handler(handlerThread.getLooper());
-
     }
-
 
     public void connectToRoom(final RoomConnectionParameters roomConnectionParameters){
     //耗时
-        this.connectionParameters = connectionParameters;
+        this.connectionParameters = roomConnectionParameters;
 
         handler.post(new Runnable() {
             @Override
             public void run() {
+                Log.e(MainActivity.TAG, "Begin to WebSocketRTCClient connectToRoom!");
                 String connectionUrl = connectionParameters.roomUrl + "/" + "join/" + connectionParameters.roomId;
                 //http请求
                 WebSocketChannelClient wsClient = new WebSocketChannelClient(handler, WebSocketRTCClient.this);
 
-                RoomParametersFetcher roomParametersFetcher = new RoomParametersFetcher(connectionParameters.roomUrl,
-                        null,
-                        new RoomParametersFetcher.RoomParametersFetcherEvents() {
-                            @Override
-                            public void onSignalingParametersReady(SignalingParameters params) {
-                                //回调这个接口
+                RoomParametersFetcher.RoomParametersFetcherEvents roomParametersFetcherEvents = new RoomParametersFetcher.RoomParametersFetcherEvents() {
+                    @Override
+                    public void onSignalingParametersReady(SignalingParameters params) {
+                        Log.e(MainActivity.TAG, "WebSocketRTCClient connectToRoom ing");
+                        //回调这个接口 信号参数
+                        messageUrl = Utils.getMessageUrl(connectionParameters, params);
+                        roomState = ConnectionState.CONNECTED;
+                        mainActivityInterface.onConnectedToRoom(params);
+                    }
 
-                            }
+                    @Override
+                    public void onSignalingParametersError(String description) {
 
-                            @Override
-                            public void onSignalingParametersError(String description) {
+                    }
+                };
 
-                            }
-                        });
+                RoomParametersFetcher roomParametersFetcher = new RoomParametersFetcher
+                        (connectionUrl,null,roomParametersFetcherEvents );
 
                 roomParametersFetcher.makeRequest();
             }
@@ -91,7 +95,5 @@ public class WebSocketRTCClient implements WebSocketChannelClient.WebSocketChann
     public void onWebSocketError(String description) {
 
     }
-
-
 
 }
